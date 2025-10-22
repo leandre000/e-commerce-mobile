@@ -59,18 +59,22 @@ const styles = StyleSheet.create({
   },
   content: {
     alignItems: 'center',
+    paddingHorizontal: 20,
+    maxWidth: 500,
   },
   appName: {
-    fontSize: 42,
+    fontSize: 36,
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 12,
     letterSpacing: 1,
+    textAlign: 'center',
   },
   tagline: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#ccc',
     marginBottom: 24,
+    textAlign: 'center',
   },
   divider: {
     width: 60,
@@ -79,8 +83,9 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   welcome: {
-    fontSize: 20,
+    fontSize: 18,
     color: '#fff',
     fontWeight: '600',
+    textAlign: 'center',
   },
 });
