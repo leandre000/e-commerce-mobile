@@ -1,4 +1,3 @@
-// Authentication Service
 import apiClient from './api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -20,7 +19,6 @@ export interface AuthResponse {
   error?: string;
 }
 
-// Register new user
 export const register = async (
   firstName: string,
   lastName: string,
@@ -51,7 +49,6 @@ export const register = async (
   }
 };
 
-// Login user
 export const login = async (
   email: string,
   password: string
@@ -61,14 +58,10 @@ export const login = async (
       email,
       password,
     });
-    // Send POST request to /api/auth/login
     
     if (response.data.success && response.data.data) {
       await AsyncStorage.setItem('authToken', response.data.data.token);
-      // Store JWT token in device storage
-      
       await AsyncStorage.setItem('user', JSON.stringify(response.data.data.user));
-      // Store user data in device storage
     }
     
     return response.data;
@@ -77,11 +70,38 @@ export const login = async (
       success: false,
       error: error.response?.data?.error || 'Login failed',
     };
-    // Return error message from server or generic message
   }
 };
 
-// Get stored user
+export const logout = async (): Promise<void> => {
+  await AsyncStorage.removeItem('authToken');
+  await AsyncStorage.removeItem('user');
+};
+
+export const getProfile = async (): Promise<AuthResponse> => {
+  try {
+    const response = await apiClient.get('/auth/profile');
+    return response.data;
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error.response?.data?.error || 'Failed to fetch profile',
+    };
+  }
+};
+
+export const forgotPassword = async (email: string): Promise<AuthResponse> => {
+  try {
+    const response = await apiClient.post('/auth/forgot-password', { email });
+    return response.data;
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error.response?.data?.error || 'Failed to process request',
+    };
+  }
+};
+
 export const getStoredUser = async (): Promise<User | null> => {
   try {
     const userStr = await AsyncStorage.getItem('user');
@@ -91,7 +111,6 @@ export const getStoredUser = async (): Promise<User | null> => {
   }
 };
 
-// Check if user is authenticated
 export const isAuthenticated = async (): Promise<boolean> => {
   const token = await AsyncStorage.getItem('authToken');
   return !!token;
