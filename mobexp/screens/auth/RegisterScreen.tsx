@@ -255,7 +255,7 @@ export default function RegisterScreen() {
             <TouchableOpacity 
               onPress={() => {
                 Haptics.selectionAsync();
-                router.back();
+                router.push('/login' as any);
               }}
               disabled={loading}
             >
