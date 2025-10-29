@@ -1,39 +1,28 @@
-
-
+// Main Server File
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 require('dotenv').config();
 
-// Import routes
 const authRoutes = require('./routes/auth');
 const cartRoutes = require('./routes/cart');
 
-// Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ============================================
-// MIDDLEWARE
-// ============================================
-
-// CORS - Allow frontend to make requests from different origin
 app.use(cors({
-  origin: '*', 
+  origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
 
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
-
 
 app.get('/health', (req, res) => {
   res.json({
@@ -43,11 +32,9 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/cart', cartRoutes);
 
-// 404 handler - Route not found
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -55,7 +42,6 @@ app.use((req, res) => {
   });
 });
 
-// Global error handler
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
   res.status(500).json({
@@ -63,8 +49,6 @@ app.use((err, req, res, next) => {
     error: 'Internal server error'
   });
 });
-
-
 
 app.listen(PORT, () => {
   console.log('\n🚀 ========================================');
