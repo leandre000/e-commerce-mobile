@@ -61,10 +61,14 @@ export const login = async (
       email,
       password,
     });
+    // Send POST request to /api/auth/login
     
     if (response.data.success && response.data.data) {
       await AsyncStorage.setItem('authToken', response.data.data.token);
+      // Store JWT token in device storage
+      
       await AsyncStorage.setItem('user', JSON.stringify(response.data.data.user));
+      // Store user data in device storage
     }
     
     return response.data;
@@ -73,38 +77,7 @@ export const login = async (
       success: false,
       error: error.response?.data?.error || 'Login failed',
     };
-  }
-};
-
-// Logout user
-export const logout = async (): Promise<void> => {
-  await AsyncStorage.removeItem('authToken');
-  await AsyncStorage.removeItem('user');
-};
-
-// Get current user profile
-export const getProfile = async (): Promise<AuthResponse> => {
-  try {
-    const response = await apiClient.get('/auth/profile');
-    return response.data;
-  } catch (error: any) {
-    return {
-      success: false,
-      error: error.response?.data?.error || 'Failed to fetch profile',
-    };
-  }
-};
-
-// Forgot password
-export const forgotPassword = async (email: string): Promise<AuthResponse> => {
-  try {
-    const response = await apiClient.post('/auth/forgot-password', { email });
-    return response.data;
-  } catch (error: any) {
-    return {
-      success: false,
-      error: error.response?.data?.error || 'Failed to process request',
-    };
+    // Return error message from server or generic message
   }
 };
 
