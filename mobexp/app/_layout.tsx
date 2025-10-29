@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { CartProvider } from '@/context/CartContext';
+import { AuthProvider } from '@/context/AuthContext';
 
 export const unstable_settings = {
   initialRouteName: '(drawer)',
@@ -14,8 +15,9 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <CartProvider>
-        <Drawer>
+      <AuthProvider>
+        <CartProvider>
+          <Drawer>
           <Drawer.Screen
             name="(drawer)"
             options={{
@@ -43,12 +45,21 @@ export default function RootLayout() {
             options={{
               drawerLabel: 'Cart',
               title: 'Cart',
-              drawerItemStyle: { display: 'none' } // Hide cart from drawer, accessible via navigation
+              drawerItemStyle: { display: 'none' }
             }}
           />
-        </Drawer>
-        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      </CartProvider>
+          <Drawer.Screen
+            name="screens"
+            options={{
+              drawerLabel: 'Auth',
+              title: 'Auth',
+              drawerItemStyle: { display: 'none' }
+            }}
+          />
+          </Drawer>
+          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+        </CartProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
