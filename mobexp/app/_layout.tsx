@@ -49,10 +49,26 @@ export default function RootLayout() {
             }}
           />
           <Drawer.Screen
-            name="screens"
+            name="login"
             options={{
-              drawerLabel: 'Auth',
-              title: 'Auth',
+              drawerLabel: 'Login',
+              title: 'Login',
+              drawerItemStyle: { display: 'none' }
+            }}
+          />
+          <Drawer.Screen
+            name="register"
+            options={{
+              drawerLabel: 'Register',
+              title: 'Register',
+              drawerItemStyle: { display: 'none' }
+            }}
+          />
+          <Drawer.Screen
+            name="forgot-password"
+            options={{
+              drawerLabel: 'Forgot Password',
+              title: 'Forgot Password',
               drawerItemStyle: { display: 'none' }
             }}
           />
