@@ -38,4 +38,47 @@ class User {
     // Securely compare plain password with hashed password
     // Returns true if match, false otherwise
   }
+
+  static async findByEmail(email) {
+    try {
+      const query = 'SELECT * FROM users WHERE email = $1';
+      const result = await pool.query(query, [email.toLowerCase()]);
+      return result.rows[0];
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async findById(id) {
+    try {
+      const query = 'SELECT id, first_name, last_name, email, age, created_at FROM users WHERE id = $1';
+      const result = await pool.query(query, [id]);
+      return result.rows[0];
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async updatePassword(userId, newPassword) {
+    try {
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      const query = 'UPDATE users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2';
+      await pool.query(query, [hashedPassword, userId]);
+      return true;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  static async getAll() {
+    try {
+      const query = 'SELECT id, first_name, last_name, email, age, created_at FROM users ORDER BY created_at DESC';
+      const result = await pool.query(query);
+      return result.rows;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
+
+module.exports = User;
