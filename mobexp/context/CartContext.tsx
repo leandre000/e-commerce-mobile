@@ -1,4 +1,6 @@
-import React, { createContext, useCallback, useContext, useMemo, useReducer } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import * as cartService from '@/services/cartService';
+import { useAuth } from './AuthContext';
 
 export type CartItem = {
   id: string;
@@ -6,89 +8,184 @@ export type CartItem = {
   qty: number;
 };
 
-type CartState = {
-  items: Record<string, CartItem>;
-};
-
-type CartAction =
-  | { type: 'ADD'; payload: { id: string; title: string } }
-  | { type: 'INC'; payload: { id: string } }
-  | { type: 'DEC'; payload: { id: string } }
-  | { type: 'REMOVE'; payload: { id: string } }
-  | { type: 'CLEAR' };
-
-const initialState: CartState = { items: {} };
-
-function reducer(state: CartState, action: CartAction): CartState {
-  switch (action.type) {
-    case 'ADD': {
-      const { id, title } = action.payload;
-      const existing = state.items[id];
-      const nextQty = (existing?.qty ?? 0) + 1;
-      return {
-        items: {
-          ...state.items,
-          [id]: { id, title, qty: nextQty },
-        },
-      };
-    }
-    case 'INC': {
-      const { id } = action.payload;
-      const it = state.items[id];
-      if (!it) return state;
-      return { items: { ...state.items, [id]: { ...it, qty: it.qty + 1 } } };
-    }
-    case 'DEC': {
-      const { id } = action.payload;
-      const it = state.items[id];
-      if (!it) return state;
-      const newQty = it.qty - 1;
-      if (newQty <= 0) {
-        const { [id]: _, ...rest } = state.items;
-        return { items: rest };
-      }
-      return { items: { ...state.items, [id]: { ...it, qty: newQty } } };
-    }
-    case 'REMOVE': {
-      const { id } = action.payload;
-      const { [id]: _, ...rest } = state.items;
-      return { items: rest };
-    }
-    case 'CLEAR':
-      return initialState;
-    default:
-      return state;
-  }
-}
 
 type CartContextType = {
   items: CartItem[];
   count: number;
-  add: (id: string, title: string) => void;
-  inc: (id: string) => void;
-  dec: (id: string) => void;
-  remove: (id: string) => void;
-  clear: () => void;
+  loading: boolean;
+  add: (id: string, title: string) => Promise<void>;
+  inc: (id: string) => Promise<void>;
+  dec: (id: string) => Promise<void>;
+  remove: (id: string) => Promise<void>;
+  clear: () => Promise<void>;
+  refresh: () => Promise<void>;
 };
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const { isAuth } = useAuth();
+  const [items, setItems] = useState<CartItem[]>([]);
+  const [count, setCount] = useState(0);
+  const [loading, setLoading] = useState(false);
 
-  const add = useCallback((id: string, title: string) => dispatch({ type: 'ADD', payload: { id, title } }), []);
-  const inc = useCallback((id: string) => dispatch({ type: 'INC', payload: { id } }), []);
-  const dec = useCallback((id: string) => dispatch({ type: 'DEC', payload: { id } }), []);
-  const remove = useCallback((id: string) => dispatch({ type: 'REMOVE', payload: { id } }), []);
-  const clear = useCallback(() => dispatch({ type: 'CLEAR' }), []);
+  // Load cart when user is authenticated
+  useEffect(() => {
+    if (isAuth) {
+      loadCart();
+    } else {
+      // Clear cart when user logs out
+      setItems([]);
+      setCount(0);
+    }
+  }, [isAuth]);
 
-  const itemsArr = useMemo(() => Object.values(state.items), [state.items]);
-  const count = useMemo(() => itemsArr.reduce((acc, it) => acc + it.qty, 0), [itemsArr]);
+  const loadCart = async () => {
+    if (!isAuth) return;
+    
+    try {
+      setLoading(true);
+      const response = await cartService.getCart();
+      if (response.success && response.data) {
+        // Transform backend cart items to match frontend format
+        const transformedItems = response.data.items.map(item => ({
+          id: item.product_id,
+          title: item.product_title,
+          qty: item.quantity,
+        }));
+        setItems(transformedItems);
+        setCount(response.data.count);
+      }
+    } catch (error) {
+      console.error('Error loading cart:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const value = useMemo(
-    () => ({ items: itemsArr, count, add, inc, dec, remove, clear }),
-    [itemsArr, count, add, inc, dec, remove, clear]
-  );
+  const add = useCallback(async (id: string, title: string) => {
+    if (!isAuth) {
+      console.warn('User must be logged in to add items to cart');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const response = await cartService.addToCart(id, title);
+      if (response.success && response.data) {
+        const transformedItems = response.data.items.map(item => ({
+          id: item.product_id,
+          title: item.product_title,
+          qty: item.quantity,
+        }));
+        setItems(transformedItems);
+        setCount(response.data.count);
+      }
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuth]);
+
+  const inc = useCallback(async (id: string) => {
+    if (!isAuth) return;
+    
+    try {
+      setLoading(true);
+      const response = await cartService.incrementItem(id);
+      if (response.success && response.data) {
+        const transformedItems = response.data.items.map(item => ({
+          id: item.product_id,
+          title: item.product_title,
+          qty: item.quantity,
+        }));
+        setItems(transformedItems);
+        setCount(response.data.count);
+      }
+    } catch (error) {
+      console.error('Error incrementing item:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuth]);
+
+  const dec = useCallback(async (id: string) => {
+    if (!isAuth) return;
+    
+    try {
+      setLoading(true);
+      const response = await cartService.decrementItem(id);
+      if (response.success && response.data) {
+        const transformedItems = response.data.items.map(item => ({
+          id: item.product_id,
+          title: item.product_title,
+          qty: item.quantity,
+        }));
+        setItems(transformedItems);
+        setCount(response.data.count);
+      }
+    } catch (error) {
+      console.error('Error decrementing item:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuth]);
+
+  const remove = useCallback(async (id: string) => {
+    if (!isAuth) return;
+    
+    try {
+      setLoading(true);
+      const response = await cartService.removeItem(id);
+      if (response.success && response.data) {
+        const transformedItems = response.data.items.map(item => ({
+          id: item.product_id,
+          title: item.product_title,
+          qty: item.quantity,
+        }));
+        setItems(transformedItems);
+        setCount(response.data.count);
+      }
+    } catch (error) {
+      console.error('Error removing item:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuth]);
+
+  const clear = useCallback(async () => {
+    if (!isAuth) return;
+    
+    try {
+      setLoading(true);
+      const response = await cartService.clearCart();
+      if (response.success) {
+        setItems([]);
+        setCount(0);
+      }
+    } catch (error) {
+      console.error('Error clearing cart:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuth]);
+
+  const refresh = useCallback(async () => {
+    await loadCart();
+  }, [isAuth]);
+
+  const value = {
+    items,
+    count,
+    loading,
+    add,
+    inc,
+    dec,
+    remove,
+    clear,
+    refresh,
+  };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
