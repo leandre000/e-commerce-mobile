@@ -1,5 +1,4 @@
-// Main Server File
-// Entry point for the backend application
+
 
 const express = require('express');
 const cors = require('cors');
@@ -20,26 +19,22 @@ const PORT = process.env.PORT || 3000;
 
 // CORS - Allow frontend to make requests from different origin
 app.use(cors({
-  origin: '*', // In production, specify exact origins
+  origin: '*', 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Body Parser - Parse JSON and URL-encoded request bodies
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Request logging middleware
+
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
 
-// ============================================
-// ROUTES
-// ============================================
 
-// Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
     success: true,
@@ -69,9 +64,7 @@ app.use((err, req, res, next) => {
   });
 });
 
-// ============================================
-// START SERVER
-// ============================================
+
 
 app.listen(PORT, () => {
   console.log('\n🚀 ========================================');
