@@ -1,49 +1,37 @@
-// Authentication Middleware
-// Protects routes by verifying JWT tokens
-
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
-// Middleware function to verify JWT token
 const authMiddleware = (req, res, next) => {
   try {
-    // Get token from Authorization header
-    // Format: "Bearer <token>"
     const authHeader = req.headers.authorization;
-
+    // Get Authorization header from request
+    // Format: "Bearer <token>"
+    
     if (!authHeader) {
       return res.status(401).json({
         success: false,
         error: 'No token provided. Authorization denied.'
       });
     }
-
-    // Extract token (remove "Bearer " prefix)
+    // Return 401 Unauthorized if no header
+    
     const token = authHeader.split(' ')[1];
-
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid token format. Authorization denied.'
-      });
-    }
-
-    // Verify token
+    // Extract token by splitting "Bearer <token>" and taking second part
+    
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Add user info to request object
-    // This makes user data available in route handlers
+    // Verify token signature and decode payload
+    // Throws error if token is invalid or expired
+    
     req.user = decoded;
-
-    // Continue to next middleware/route handler
+    // Attach decoded user data to request object
+    // Makes user info available in route handlers
+    
     next();
+    // Continue to next middleware/route handler
   } catch (error) {
-    // Token is invalid or expired
     return res.status(401).json({
       success: false,
       error: 'Token is invalid or expired. Authorization denied.'
     });
   }
 };
-
-module.exports = authMiddleware;
