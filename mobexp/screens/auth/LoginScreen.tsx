@@ -125,7 +125,7 @@ export default function LoginScreen() {
             style={styles.forgotPassword}
             onPress={() => {
               Haptics.selectionAsync();
-              router.push('/forgot-password');
+              router.push('/forgot-password' as any);
             }}
             disabled={loading}
           >
@@ -151,7 +151,7 @@ export default function LoginScreen() {
             <TouchableOpacity 
               onPress={() => {
                 Haptics.selectionAsync();
-                router.push('/register');
+                router.push('/register' as any);
               }}
               disabled={loading}
             >
